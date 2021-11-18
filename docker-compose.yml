@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  stock.screener.backend:
+    build: ./backend/
+    container_name: stock.screener.backend
+    ports:
+      - 3000:3000
+    volumes:
+      - ./backend/src:/app/src
+      - /app/node_modules
+    depends_on: 
+      - stock.screener.database
+    networks: 
+      - stock.screener.network
+    command: ["./wait-for-it.sh", "stock.screener.database:27017", "-t", "120", "--", "npm", "run", "start:dev"]
+  stock.screener.database:
+    build: ./database/
+    container_name: stock.screener.database
+    volumes:
+      - /apps/stockScreener/mongo:/data/db
+    ports: 
+      - 27017:27017
+    networks: 
+      - stock.screener.network
+networks:
+  stock.screener.network:
+    driver: bridge
