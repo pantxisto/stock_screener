@@ -1,6 +1,8 @@
 const path = require('path');
 const fs = require("fs");
 
+// TODO: MEJORAR ALGORITMO PARA QUE CREE UNA UNICA INTERFAZ PARA TODAS LAS EMPRESAS MERGEANDO
+// LAS INTERFACES UNICAS
 generateInterface();
 
 function generateInterface() {
@@ -47,6 +49,7 @@ function createInterface(parsedElement, interface) {
   }
 }
 
+
 function createArrayInterface(parsedArray, interface) {
   for (let i = 0; i < parsedArray.length; i++) {
     const propertyType = Object.prototype.toString.call(parsedArray[i]);
@@ -64,6 +67,17 @@ function createArrayInterface(parsedArray, interface) {
       createArrayInterface(parsedArray[i], interface[property]);
     }
   }
+  const mergedObjects = mergeArrayObjects(interface);
+  interface.splice(0,interface.length)
+  interface.push(mergedObjects);
+}
+
+function mergeArrayObjects(interface) {
+  let mergedObject = {};
+  for (let i = 0; i < interface.length; i++) {
+    mergedObject = {...mergedObject, ...interface[i]};
+  }
+  return mergedObject;
 }
 
 function parseFile(fileName) {
