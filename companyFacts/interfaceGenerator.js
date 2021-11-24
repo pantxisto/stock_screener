@@ -1,5 +1,7 @@
-import * as path from "path";
-import * as fs from "fs";
+const path = require('path');
+const fs = require("fs");
+
+generateInterface();
 
 function generateInterface() {
   const fileNames = [
@@ -20,7 +22,7 @@ function generateInterface() {
     const parsedElement = parseFile(fileNames[i]);
     let interface = {};
     createInterface(parsedElement, interface);
-    writeParsedFile(parsedElement, fileNames[i]);
+    writeParsedFile(interface, fileNames[i]);
   }
 }
 
