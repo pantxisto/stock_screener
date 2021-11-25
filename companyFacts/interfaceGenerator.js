@@ -1,41 +1,30 @@
-const path = require('path');
+const path = require("path");
 const fs = require("fs");
 
-// TODO: MEJORAR ALGORITMO PARA QUE CREE UNA UNICA INTERFAZ PARA TODAS LAS EMPRESAS MERGEANDO
-// LAS INTERFACES UNICAS
+// TODO: AUMENTAR BUFFER PARA GESTIONAR 16000 JSON
 generateInterface();
 
 function generateInterface() {
-  const fileNames = [
-    "CIK0000001750.json",
-    "CIK0000001800.json",
-    "CIK0000001961.json",
-    "CIK0000002034.json",
-    "CIK0000002098.json",
-    "CIK0000002178.json",
-    "CIK0000002186.json",
-    "CIK0000002488.json",
-    "CIK0000002491.json",
-    "CIK0000002809.json",
-    "CIK0000002969.json",
-  ];
-
+  const fileNames = getFileNames();
+  let finalInterface = {};
   for (let i = 0; i < fileNames.length; i++) {
     const parsedElement = parseFile(fileNames[i]);
     let interface = {};
-    createInterface(parsedElement, interface);
-    writeParsedFile(interface, fileNames[i]);
+    createFileInterface(parsedElement, interface);
+    createFinalInterface(interface, finalInterface);
   }
+  writeParsedFile(finalInterface, "secInterface.json");
 }
 
-function createInterface(parsedElement, interface) {
+/******************** NORMAL *********************** */
+function createFileInterface(parsedElement, interface) {
   for (let property in parsedElement) {
     const propertyType = Object.prototype.toString.call(
       parsedElement[property]
     );
     if (propertyType == "[object Object]") {
       interface[property] = {};
-      createInterface(parsedElement[property], interface[property]);
+      createFileInterface(parsedElement[property], interface[property]);
     } else if (propertyType == "[object String]")
       interface[property] = "String";
     else if (propertyType == "[object Number]")
@@ -44,38 +33,111 @@ function createInterface(parsedElement, interface) {
       interface[property] = "mongoose.Schema.Types.Mixed";
     else if (propertyType == "[object Array]") {
       interface[property] = [];
-      createArrayInterface(parsedElement[property], interface[property]);
+      createArrayFileInterface(parsedElement[property], interface[property]);
     }
   }
 }
 
-
-function createArrayInterface(parsedArray, interface) {
+function createArrayFileInterface(parsedArray, interface) {
   for (let i = 0; i < parsedArray.length; i++) {
     const propertyType = Object.prototype.toString.call(parsedArray[i]);
     if (propertyType == "[object Object]") {
       interface.push({});
-      createInterface(parsedArray[i], interface[interface.length - 1]);
-    } else if (propertyType == "[object String]")
-      interface[property] = "String";
+      createFileInterface(parsedArray[i], interface[interface.length - 1]);
+    } else if (propertyType == "[object String]") interface.push("String");
     else if (propertyType == "[object Number]")
-      interface[property] = "mongoose.Schema.Types.Mixed";
+      interface.push("mongoose.Schema.Types.Mixed");
     else if (propertyType == "[object Null]")
-      interface[property] = "mongoose.Schema.Types.Mixed";
+      interface.push("mongoose.Schema.Types.Mixed");
     else if (propertyType == "[object Array]") {
-      interface[property] = [];
-      createArrayInterface(parsedArray[i], interface[property]);
+      interface.push([]);
+      createArrayFileInterface(parsedArray[i], interface[interface.length - 1]);
     }
   }
   const mergedObjects = mergeArrayObjects(interface);
-  interface.splice(0,interface.length)
+  interface.splice(0, interface.length);
   interface.push(mergedObjects);
+}
+
+/******************** FINAL *********************** */
+function createFinalInterface(fileInterface, finalInterface) {
+  for (let property in fileInterface) {
+    const propertyType = Object.prototype.toString.call(
+      fileInterface[property]
+    );
+    if (propertyType == "[object Object]") {
+      if (finalInterface[property])
+        fileInterface[property] = {
+          ...finalInterface[property],
+          ...fileInterface[property],
+        };
+      else finalInterface[property] = {};
+      createFinalInterface(fileInterface[property], finalInterface[property]);
+    } else if (propertyType == "[object String]") {
+      if (!finalInterface[property]) finalInterface[property] = "String";
+    } else if (propertyType == "[object Number]") {
+      if (!finalInterface[property])
+        finalInterface[property] = "mongoose.Schema.Types.Mixed";
+    } else if (propertyType == "[object Null]") {
+      if (!finalInterface[property])
+        finalInterface[property] = "mongoose.Schema.Types.Mixed";
+    } else if (propertyType == "[object Array]") {
+      if (finalInterface[property])
+        fileInterface[property] = [
+          ...finalInterface[property],
+          ...fileInterface[property],
+        ];
+      else finalInterface[property] = [];
+      createArrayFinalInterface(
+        fileInterface[property],
+        finalInterface[property]
+      );
+    }
+  }
+}
+
+function createArrayFinalInterface(fileArrayInterface, finalArrayInterface) {
+  for (let i = 0; i < fileArrayInterface.length; i++) {
+    const propertyType = Object.prototype.toString.call(fileArrayInterface[i]);
+    if (propertyType == "[object Object]") {
+      if (finalArrayInterface.length > 0) {
+        fileArrayInterface[i] = {
+          ...finalArrayInterface[0],
+          ...fileArrayInterface[i],
+        };
+        finalArrayInterface.splice(0, finalArrayInterface.length);
+      }
+      finalArrayInterface.push({});
+      createFileInterface(
+        fileArrayInterface[i],
+        finalArrayInterface[finalArrayInterface.length - 1]
+      );
+    } else if (propertyType == "[object String]") {
+      finalArrayInterface.splice(0, finalArrayInterface.length);
+      finalArrayInterface.push("String");
+    } else if (propertyType == "[object Number]") {
+      finalArrayInterface.splice(0, finalArrayInterface.length);
+      finalArrayInterface.push("mongoose.Schema.Types.Mixed");
+    } else if (propertyType == "[object Null]") {
+      finalArrayInterface.splice(0, finalArrayInterface.length);
+      finalArrayInterface.push("mongoose.Schema.Types.Mixed");
+    } else if (propertyType == "[object Array]") {
+      finalArrayInterface[property] = [];
+      createArrayFileInterface(
+        fileArrayInterface[i],
+        finalArrayInterface[property]
+      );
+    }
+  }
+  const mergedObjects = mergeArrayObjects(finalArrayInterface);
+  finalArrayInterface.splice(0, finalArrayInterface.length);
+  finalArrayInterface.push(mergedObjects);
 }
 
 function mergeArrayObjects(interface) {
   let mergedObject = {};
   for (let i = 0; i < interface.length; i++) {
-    mergedObject = {...mergedObject, ...interface[i]};
+    mergedObject = { ...mergedObject, ...interface[i] };
   }
   return mergedObject;
 }
@@ -93,4 +155,12 @@ function writeParsedFile(parsedElement, fileName) {
     `./interfaces/interface_${fileName}`,
     JSON.stringify(parsedElement, null, 2)
   );
+}
+
+function getFileNames() {
+  let fileNames = [];
+  fs.readdirSync("./").forEach((file) => {
+    if (file.includes("CIK")) fileNames.push(file);
+  });
+  return fileNames;
 }
