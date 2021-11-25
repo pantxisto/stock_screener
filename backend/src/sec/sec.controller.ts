@@ -1,6 +1,4 @@
 import { Controller, Get, Post } from '@nestjs/common';
-import * as fs from 'fs';
-import * as path from 'path';
 import { SecService } from './sec.service';
 
 @Controller('sec')
