@@ -7,7 +7,7 @@ import { SecSchema } from './schema/sec.schema';
 @Module({
   imports: [
     HttpModule,
-    MongooseModule.forFeature([{ name: 'sec', schema: SecSchema }]),
+    MongooseModule.forFeature([{ name: 'sec_financial', schema: SecSchema }]),
   ],
   controllers: [SecController],
   providers: [SecService],

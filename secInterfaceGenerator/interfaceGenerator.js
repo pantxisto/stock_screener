@@ -2,7 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const stringify = require("json-stable-stringify");
 
-generateInterface();
+// generateInterface();
 
 function generateInterface() {
   const fileNames = getFileNames();

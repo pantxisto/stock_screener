@@ -4,9 +4,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { from } from 'rxjs';
 import { concatMap, delay, filter, map, tap } from 'rxjs/operators';
-import { IFinancial } from './interfaces/financial.interface';
-import { IMetric } from './interfaces/metric.interface';
-import { IStockSymbol } from './interfaces/stockSymbol.interface';
+import { IFinancial } from './interface/financial.interface';
+import { IMetric } from './interface/metric.interface';
+import { IStockSymbol } from './interface/stockSymbol.interface';
 // import * as ExcelJS from 'exceljs';
 
 @Injectable()
