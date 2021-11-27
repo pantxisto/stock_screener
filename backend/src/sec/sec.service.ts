@@ -44,9 +44,8 @@ export class SecService {
       .aggregate()
       .limit(2)
       .project(this.epsSlopeAndMinProject)
+      .addFields(this.epsSlopeAndMinAddFields)
       .match(this.epsSlopeAndMinQuery)
-      // .project({})
-      // .count('result')
       .exec();
     return result;
   }
@@ -76,6 +75,31 @@ export class SecService {
       'eps.9': { $exists: true },
       // 'eps.1.start': { "$regex": "/.*/01/01.*/}" }
       // start - end = 1 año
+    };
+  }
+
+  private get epsSlopeAndMinAddFields() {
+    return {
+      eps: {
+        $reduce: {
+          input: '$eps',
+          initialValue: [],
+          in: {
+            $concatArrays: [
+              '$$value',
+              {
+                $cond: [
+                  {
+                    $in: ['$$this.start', '$$value.start'],
+                  },
+                  [],
+                  ['$$this'],
+                ],
+              },
+            ],
+          },
+        },
+      },
     };
   }
 
